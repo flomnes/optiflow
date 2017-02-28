@@ -17,7 +17,7 @@ The basic options are:
 ```
 --config	configuration number, from 1 to 5
 --resu		folder in which the files and results will be saved, created if non-existent
-
+```
 Numerical paramters:
 ```
 --navsto	1=Navier-Stokes, 0=Stokes
@@ -37,13 +37,13 @@ Numerical paramters:
 --alpha		Update ratio for b : b^{n+1}=alpha*b^n
 --save		1=save all figures in the result directory, 0=save nothing at all
 --saveevery n	figures will be saved every n iterations
-
+```
 #### Notes
 1. If gnuplot is installed, you can plot relevant data from a result directory. Simply copy plot.gp from the project root the result directory and execute
-   ` gnuplot plot.gp `
+   ` gnuplot plot.gp `.
 A file called "multi.pdf" will be generated.
 
-2. Crashes may occur for because of mesh self-intersections. You may try to choose a smaller value for tau. You can also increase the value of minarea so that remeshing will be done earlier.
+2. Crashes may occur for because of mesh self-intersections. You may try to choose a smaller value for `tau`. You can also increase the value of `minarea` so that remeshing will be done earlier.
 
 #### Authors & contributors
 * optiflow has been developped by Florian Omnès (Université Pierre et Marie-Curie), Yannick Privat (Université Pierre et Marie Curie, CNRS), Charles Dapogny (Université Grenobles-Alpes, CNRS) and Pascal Frey (Université Pierre et Marie Curie, Institut du Calcul et des Données)
