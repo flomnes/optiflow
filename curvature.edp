@@ -1,0 +1,285 @@
+/* Florian OMNES (florian.omnes@upmc.fr) */
+/* 2015-2016 */
+
+func int nextpt (mesh& Th, int[int]& parcourus, int u1, int& nbparcourus, int& mx) {
+  int nbe = Th.nbe;
+  int jj, n1, n2;
+  for (jj = 0; jj < nbe; jj++) {
+    if (parcourus[jj]) {
+      continue;
+    }
+    n1 = Th.be(jj)[0] != u1;
+    n2 = Th.be(jj)[1] != u1;
+    if (n1 && n2) { /* Ni l'un, ni l'autre */
+      continue;
+    }
+    if (n1) {
+      parcourus[jj] = 1;
+      nbparcourus++;
+      mx++;
+      return Th.be(jj)[0];
+    }
+    if (n2) {
+      parcourus[jj] = 1;
+      nbparcourus++;
+      mx++;
+      return Th.be(jj)[1];
+    }
+  }
+  return -1;
+}
+
+func real areatab(mesh& Th, int[int]& noeuds) {
+  int v0, v1;
+  int nbe = 0;
+  int ii, jj;
+  real x00, x11, y00, y11;
+  real a = 0;
+
+  while(1) {
+    if(noeuds[nbe] != -1) {
+      nbe++;
+    } else {
+      break;
+    }
+  }
+  for(ii = 0; ii < nbe; ii++) {
+    jj = ii-1;
+    if(jj<0) { jj+=nbe;}
+    v0 = noeuds[jj];
+    v1 = noeuds[ii];
+
+    x00 = Th(v0).x;
+    y00 = Th(v0).y;
+
+    x11 = Th(v1).x;
+    y11 = Th(v1).y;
+    a+=x00*y11-x11*y00;
+  }
+  return a;
+}
+
+/* Reverse an integer array */
+func int reversetab(int[int,int]& T, int kk) {
+  int n = T.m - 1;
+  int a;
+  int[int] Q(n);
+  for (int ii = 0; ii < n; ii++) {
+    Q[ii] = T(kk, n-ii-1);
+  }
+  for (int ii = 0; ii < n; ii++) {
+    T(kk,ii) = Q[ii];
+  }
+}
+
+/* Fills ordre with the boundary connectivity. Each line contains the vertex number of a connected component, finished with -1 */
+/* This function is purely geometric, it ignores labels */
+func int calculconnect(mesh& Th, int[int,int]& ordre) {
+  int u1, u2, ii, jj;
+  int mx = 0, mx1 = 0;
+  int nbcc = 0;
+  int nbe = Th.nbe;
+  ordre.resize(1, nbe+2);
+  int[int] parcourus(nbe);
+  for (ii = 0; ii < nbe; ii++) { parcourus[ii] = 0; }
+  int nbparcourus = 0;
+  while (1) { /* Loop on connected components */
+    ii = 0;
+    while (ii < nbe) { /* Find the 1st edge which has not yet been treated */
+      if (parcourus[ii]) {
+      ii++;
+      } else {
+	break;
+      }
+    }
+    jj = 0;
+    u1 = Th.be(ii)[0];
+    ordre(nbcc, 0) = u1;
+    parcourus[ii] = 1;
+    nbparcourus++;
+    mx1 = 1;
+    while (u1 != -1) {
+      u1 = nextpt(Th, parcourus, u1, nbparcourus, mx1);
+      ordre(nbcc, jj+1) = u1;
+      jj++;
+    }
+    mx = max(mx, mx1);
+    mx1 = 1;
+    nbcc++;
+    if (nbparcourus == nbe) {
+      break;
+    } else { /* There is at lease one more connected component */
+      ordre.resize(nbcc+1, nbe);
+    }
+  }
+  ordre.resize(nbcc, mx+1); /* +1 pour le -1 final. */
+  /* Compute the area of each connected component. Reverse the numbering if the area is <0 */
+  /* This procedure ensures that the curvature be >0 when the boundary is convex, and <0 when it is concave */
+  for (ii = 0; ii < ordre.n; ii++) {
+    if (areatab(Th, ordre(ii, :)) < 0) {
+      reversetab(ordre, ii);
+    }
+  }
+  return nbcc;
+}
+
+func int extremlabel(mesh& Th, int[int,int]& ordre, int lab, int[int]& I, int[int]& extrem)
+{
+  if (ordre.n > 1) {
+    cout << "Error : feature  is not implemented" << endl;
+  } else {
+    int nbecc = 0;
+    while(ordre(0, nbecc) != -1) {
+      nbecc++;
+    }
+    int[int] tmp;
+    I.resize(nbecc);
+    tmp.resize(nbecc);
+    extrem.resize(nbecc);
+    
+    int ii = 0, jj = 0, kk = 0, ll;
+    int v1, v2;
+    for (ii = 0; ii < nbecc; ii++) {
+      v2 = ordre(0,ii);
+      if (ii > 0) {
+	v1 = ordre(0, ii-1);
+      } else {
+	v1 = ordre(0, nbecc-1);
+      }
+      if (Th(v2).label == lab) {
+	I[jj++] = v2;
+      }
+      if (Th(v1).label == lab && Th(v2).label != lab) {
+	tmp[kk++] = v1;
+      }
+      if (Th(v2).label == lab && Th(v1).label != lab) {
+	tmp[kk++] = v2;
+      }
+    }
+    I.resize(jj);
+    /* Inversion du tableau I pour trouver les extrêmités */
+    ll = 0;
+    for (ii = 0; ii < kk; ii++) {
+      jj = 0;
+      while (tmp[ii] != I[jj]) {
+	jj++;
+      }
+      extrem[ll++] = jj;
+    }
+    
+    extrem.resize(ll);
+  }
+}
+
+
+func int tc(mesh& Th, int[int,int]& ordre, real[int]& k) {
+  /* Calcul de la courbure */
+  real x00, y00, x11, y11, x22, y22, nx, ny, tx, ty, rad, kap;
+  int ii, jj, ll = 0;
+  int nbecc;
+  int v0, v1, v2;
+  real eps = 1e-9;
+  real N1, N2, D1, D2;
+  k.resize(Th.nv);
+  for(ii = 0; ii < Th.nv; ii++) {
+    k[ii] = 0;
+  }
+  for(ll = 0; ll < ordre.n; ll++) {
+    nbecc = 0;
+    while(ordre(ll, nbecc) != -1) {
+      nbecc++;
+    }
+    for(ii = 0; ii < nbecc; ii++) {
+      v1 = ordre(ll,ii);
+      k[v1] = v1;
+    }
+  }
+}
+
+func int courbure(mesh& Th, int[int,int]& ordre, real[int]& k) {
+  /* Computation of the curvature */
+  real x00, y00, x11, y11, x22, y22, nx, ny, tx, ty, rad, kap;
+  int ii, jj, ll = 0;
+  int nbecc;
+  int v0, v1, v2;
+  real eps = 1e-9;
+  real N1, N2, D1, D2;
+  k.resize(Th.nv);
+  for(ii = 0; ii < Th.nv; ii++) {
+    k[ii] = 0;
+  }
+  for(ll = 0; ll < ordre.n; ll++) {
+    nbecc = 0;
+    while(ordre(ll, nbecc) != -1) {
+      nbecc++;
+    }
+    for(ii = 0; ii < nbecc; ii++) {
+      jj = ii-1;
+      if(jj<0) { jj+=nbecc;}
+      v0 = ordre(ll,jj);
+      v1 = ordre(ll,ii);
+      if (ii+1 < nbecc) {
+	v2 = ii+1;
+      } else {
+	v2 = 0;
+      }
+      v2 = ordre(ll,(ii+1)%nbecc);
+
+      x00 = Th(v0).x;
+      y00 = Th(v0).y;
+
+      x11 = Th(v1).x;
+      y11 = Th(v1).y;
+
+      x22 = Th(v2).x;
+      y22 = Th(v2).y;
+
+      tx = x22 - x00;
+      ty = y22 - y00;
+
+      nx = ty / sqrt(eps + tx^2 + ty^2);
+      ny = -tx / sqrt(eps + tx^2 + ty^2);
+
+      N1 = ((x11-x00)^2 + (y11-y00)^2);
+      D1 = (-nx*(x00-x11)-ny*(y00-y11));
+
+      N2 = ((x22-x11)^2+(y22-y11)^2);
+      D2 = (-nx*(x22-x11)-ny*(y22-y11));
+
+      if(abs(D1)<eps) {
+	k[v1] = 4 * D1/N1;
+      }
+      else if(abs(D2)<eps) {
+	k[v1] = 4 * D2/N2;
+      }
+      else {
+	rad = 1./4 * (N1/D1 + N2/D2);
+	if(abs(rad)>eps) {
+	  k[v1] = 1./rad;
+	} else {
+	  k[v1] = 0;
+	}
+      }
+    }
+  }
+}
+
+func int writeboundary(mesh& Th, int[int,int]& ordre, string filename, real[int]& fn) {
+  int ii, jj, v;
+  ofstream ncc(filename+".ncc");
+  ncc  << ordre.n << endl;
+  for(ii = 0; ii < ordre.n; ii++) {
+    ofstream r(filename+"."+(ii+1));
+    for (jj = 0; jj < ordre.m; jj++) {
+      v = ordre(ii,jj);
+      if(v != -1) {
+	r << Th(v).x << " " << Th(v).y << " " << fn[v] << endl;
+      } else {
+	break;
+      }
+    }
+    v = ordre(ii,0);
+    r << Th(v).x << " " << Th(v).y << " " << fn[v] << endl;
+  }
+}
+

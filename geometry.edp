@@ -1,0 +1,109 @@
+include "getARGV.idp"
+int config = getARGV("--config", 0);
+
+mesh Th;
+
+real ll = 1.5;
+int pp = getARGV("--pp", 40);
+real hv = .3; /* Si config = 3 Hauteur d'un espace entre deux e/s à droite (x=ll) */
+real hs = 1./3; /* Si config = 3 Hauteur droite (x=ll) */
+real he = 1./3; /* Si config = 3 Hauteur gauche (x=0) */
+
+/* Si config = 0 ou 4 */
+real l1=1./3, l2=2./3, l3=1./3;
+real lt = l1+l2+l3;
+real h1=1./3, h2=1./3, h3=1./3;
+real ht = h1+h2+h3;
+real r0 = 1./8;
+
+func real param(real a, real b, real t) {
+  return (1-t)*a+t*b;
+}
+
+func real circlearcx(real xo, real r, real a1, real a2, real t) {
+  return xo + r*cos(param(a1,a2,t));
+}
+
+func real circlearcy(real yo, real r, real a1, real a2, real t) {
+  return yo + r*sin(param(a1,a2,t));
+}
+
+/*
+Inlet 1
+Outlet 2
+Free boundary 3
+*/
+
+string meshname = getARGV("--mesh", "");
+
+if (config == 1) { // Tuyau avec Entrée & sortie perpendiculaires
+  int n=1;
+  border in(t=0,1) {x=param(0,1./3,t); y=0; label = 2;};
+  border sig1(t=0,1){x=circlearcx(1,2./3,pi,pi/2,t^n);y=circlearcy(0,2./3,pi,pi/2,t^n);label=3;};
+  border out(t=0,1) {x=1; y=param(2./3,1,t);label=1;};
+  border sig2(t=0,1){x=circlearcx(1,1,pi/2,pi,1-(1-t)^n);y=circlearcy(0,1,pi/2,pi,1-(1-t)^n);label=3;};
+  Th = buildmesh(in(pp/2)+sig1(pp)+out(pp/2)+sig2(pp));
+  Th = adaptmesh(Th, IsMetric=1, 1./30);
+ }
+
+if (config == 2) { // Configuration (II) : 4 inlets, 1 outlet
+  real tt = 1./10;
+  real ttt = 1-tt;
+  border in(t=0,1){x=0; y=2./3-1./3*t;label=2;};
+  border sig11(t=0,1){x=ttt*(ll-1./3)*t; y= 1./3; label=3;};
+  border sig12(t=0,1){x=ttt*(ll-1./3)+tt*(ll-1./3)*t;y=1./3-1./3*t;label=3;};
+    
+  border out11(t=0,1./3){x=ll-1./3+1./3*t; y=1./3*t;label=1;};
+  border sign1(t=1./3,2./3){x=ll-1./3+1./3*t; y=1./3*t;label=3;};
+  border out12(t=2./3,1){x=ll-1./3+1./3*t; y=1./3*t;label=1;};
+    
+  border sig2(t=0,1){x=ll; y=1./3+t*1./3;label=3;};
+
+  border out21(t=0,1./3){x=ll-1./3*t; y=2./3+1./3*t;label=1;};
+  border sign2(t=1./3,2./3){x=ll-1./3*t; y=2./3+1./3*t;label=3;};
+  border out22(t=2./3,1){x=ll-1./3*t; y=2./3+1./3*t;label=1;};
+
+  border sig31(t=1,0){x=ttt*(ll-1./3)*t;y=2./3;label=3;};
+  border sig32(t=1,0){x=ttt*(ll-1./3)+tt*(ll-1./3)*t;y=2./3+1./3*t;label=3;};
+  Th = buildmesh(in(pp/2)+sig11(pp)+sig12(pp)+out11(pp/2)+sign1(pp/2)+out12(pp/2)+sig2(pp)+out21(pp/2)+sign2(pp/2)+out22(pp/2)+sig32(pp)+sig31(pp));
+  Th = adaptmesh(Th, IsMetric=1, 1./30);
+  plot(Th);
+ }
+
+if(config == 3) {
+  border b1(t=0,1){x=param(0,ll,t);y=0;label=3;};
+  border out1(t=0,1){x=ll;y=t;label=2;};
+  border b2(t=0,1){x=param(ll,0,t);y=1;label=3;};
+  border in(t=0,1){x=0;y=param(1,0,t);label=1;};
+  Th = buildmesh(b1(pp)+out1(pp)+b2(pp)+in(pp));
+ }
+
+
+if(config == 4) {
+  border b1(t=0,1){x=param(0,ll,t);y=0;label=1;};
+  border out1(t=0,1){x=ll;y=t;label=2;};
+  border b2(t=0,1){x=param(ll,0,t);y=1;label=1;};
+  border in(t=0,1){x=0;y=param(1,0,t);label=1;};
+  border cav(t=2*pi,0){x=ll/2+.1*cos(t);y=1./2+.1*sin(t);label=3;};
+  Th = buildmesh(b1(pp)+out1(pp)+b2(pp)+in(pp)+cav(2*pp));
+  Th = movemesh(Th, [x, y-.5]);
+ }
+
+if (config == 5) {
+  /* border in(t=0,1){x=0; y=2./3-1./3*t;label=2;}; */
+  /* border sig1(t=0,1){x=(ll-1./3)*t; y=1./3-1./3*t;label=3;}; */
+  /* border out1(t=0,1){x=ll-1./3+1./3*t; y=1./3*t;label=1;}; */
+  /* border sig2(t=0,1){x=ll; y=1./3+t*1./3;label=3;}; */
+  /* /\* border sig2(t=0,1){x=circlearcx(ll, -1./40, -pi/2, pi/2, t); y=circlearcy(1./3+1./6, 1./6, -pi/2, pi/2, t);label=3;}; *\/ */
+  /* border out2(t=0,1){x=ll-1./3*t; y=2./3+1./3*t;label=1;}; */
+  /* border sig3(t=0,1){x=(ll-1./3)*(1-t); y=1-1./3*t;label=3;}; */
+  /* Th = buildmesh(in(pp/2)+sig1(2*pp)+out1(pp/2)+sig2(pp)+out2(pp/2)+sig3(2*pp)); */
+  cout << "Sorry this mesh cannot be re-generated" << endl;
+  exit(1);
+ }
+
+
+savemesh(Th,"meshes/mesh"+config+".mesh");
+//savemesh(Th,"meshes/mesh"+config+".msh");
+
+
