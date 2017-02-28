@@ -3,7 +3,7 @@ Optiflow is an implementation of a shape-optimization method for two-dimensional
 
 #### Installation
 
-1. You will need a recent FreeFem++ installation, see http://www.freefem.org/ff++/. This program was written and tested with FreeFem++ 3.42 andd should work properly with any subsequent version.
+1. You will need a recent FreeFem++ installation, see http://www.freefem.org/ff++/. This program was written and tested with FreeFem++ 3.42 and should work properly with any subsequent version.
 
 2. Download the zip archive at https://github.com/flomnes/optiflow/archive/master.zip or clone this repository
    ```
@@ -21,7 +21,9 @@ Optiflow is an implementation of a shape-optimization method for two-dimensional
 #### Usage
 
 Five examples can be found in the file run_case.sh. The general syntax is
-     FreeFem++-nw main.edp [--config numconfig] [--resu resfolder] [numerical parameters]
+```
+FreeFem++-nw main.edp [--config numconfig] [--resu resfolder] [numerical parameters]
+```
 
 The basic options are:
 ```
