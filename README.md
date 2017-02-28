@@ -5,8 +5,18 @@ Optiflow is an implementation of a shape-optimization method for two-dimensional
 
 1. You will need a recent FreeFem++ installation, see http://www.freefem.org/ff++/. This program was written and tested with FreeFem++ 3.42 andd should work properly with any subsequent version.
 
-2. Download the zip archive, then change directory to the decompressed directory :
-   ` cd optiflow `
+2. Download the zip archive at https://github.com/flomnes/optiflow/archive/master.zip or clone this repository
+   ```
+   git clone https://github.com/flomnes/optiflow.git
+   ```
+   then navigate to the decompressed directory :
+   ```
+   cd optiflow-master
+   ```
+   or
+   ```
+   cd optiflow
+   ```
 
 #### Usage
 
