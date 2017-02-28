@@ -14,20 +14,19 @@ cout << "Loading mesh " << meshname << "...";
 Th = readmesh(meshname);
 cout << "done." << endl;
 cout.flush;
-/* Th = readmesh("meshinit2.msh"); */
 
 mesh Th2;
 
 cout.precision(12);
 
-/* Sauvegarde des résultats */
+/* Save results */
 int save = getARGV("--save", 1);
 //////////////////////////////////////////////////////////////////////////
 
-/* Paramètres du modèle */
+/* Numerical parameters */
 real mu = 1./200;
 real muer = 1;
-/* Paramètres de calcul*/
+
 real binit = getARGV("--binit", 1e-2);
 real btarget = getARGV("--btarget", 1e1);
 
@@ -59,8 +58,6 @@ int every = getARGV("--saveaevery", 3);
 real minarea;
 real gamma1 = 1-gamma;
 
-
-/* Variables de calcul */
 real epsilon = 1e-6;
 real epspen = 1e-6;
 real arrns = 1e-6;
