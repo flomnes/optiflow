@@ -159,8 +159,7 @@ problem stokes([ux, uy, p], [vx, vy, q]) =
   +int2d(Th)(div(ux,uy)*q)
   -int2d(Th)(p*q*epsilon)
   /* +int2d(Th)(pn*(ux*vx+uy*vy)) /\* MATMOU *\/ */
-  +on(4, uy=0)
-  +on(3,5,ux=0,uy=0)
+  +on(3,ux=0,uy=0)
   +on(1,ux=clx, uy=cly);
 
 /* Vérifié le 28/06/2016 */
@@ -185,8 +184,8 @@ macro ns () {
 		       + tr(UgradV(ux,uy, ux, uy))*[vx,vy]
 		       - div(ux,uy)*qq - div(vx,vy)*p
 		       - epsilon*p*qq)
-	    +on(4, duy=0)
-	    +on(1,3,5,dux=0,duy=0);
+	    +on(1,3,dux=0,duy=0);
+
 	  ux[] += dux[];
 	  uy[] += duy[];
 	  p[]  += dp[];
@@ -224,11 +223,12 @@ macro regulbord() {
     +int1d(Th,3)(gamma1*tr(gradT(dpy))*gradT(phiy))
     +int1d(Th,3)(gradDF*dotN(phix, phiy))
     +on(4, dpy=0)
-    +on(1,5,2, dpx=0)
-    +on(1,5,2, dpy=0);
+    +on(1, 2, dpx=0)
+    +on(1, 2, dpy=0);
 } //EOM
 	   
 string strname = getARGV("--resu", "");
+cout << "Results and figures will be saved in " << strname << endl;
 //strname = "resu/"+strname;
 system("mkdir "+strname);
 savemesh(Th, strname+"/initmesh.msh");
