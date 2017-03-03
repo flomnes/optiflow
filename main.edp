@@ -222,7 +222,6 @@ macro regulbord() {
     +int1d(Th,3)(gamma1*tr(gradT(dpx))*gradT(phix))
     +int1d(Th,3)(gamma1*tr(gradT(dpy))*gradT(phiy))
     +int1d(Th,3)(gradDF*dotN(phix, phiy))
-    +on(4, dpy=0)
     +on(1, 2, dpx=0)
     +on(1, 2, dpy=0);
 } //EOM
