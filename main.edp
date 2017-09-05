@@ -53,7 +53,7 @@ int optraff = getARGV("--optraff", 1);
 int navsto = getARGV("--navsto", 1); /* 1 = Navier-Stokes, 0 = Stokes. Default = 1 */
 real gamma = getARGV("--gamma", 1.);
 real minarea0 = getARGV("--minarea", 1e-4);
-int every = getARGV("--saveaevery", 3);
+int every = getARGV("--saveevery", 3);
 
 real minarea;
 real gamma1 = 1-gamma;
