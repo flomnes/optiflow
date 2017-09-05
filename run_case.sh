@@ -1,7 +1,7 @@
 #Get rid of the somewhat excessive debugging info from FreeFem++
 export FF_VERBOSITY=0;
 FLAGS="--saveevery 1"
-FF=FreeFem++-nw
+FF=FreeFem++
 case "$1" in
     1)
 	echo "Launching test-case 1"
@@ -23,7 +23,11 @@ case "$1" in
 	echo "Launching test-case 5"
 	$FF main.edp --config 5 --resu resu/case5 --binit 1e2 --btarget 1e2 --cv .97 --tau 1e-2 --l0 0 --optraff 0 --raffinit 3e-2 --beta 0 --gamma 1e-2 $FLAGS
 	;;
+    6)
+	echo "Launching test-case 6"
+	$FF main.edp --config 6 --resu resu/case6 --binit 1e1 --btarget 1e2 --cv 1 --tau 1e-2 --l0 0 --optraff 0 --raffinit 3e-2 --beta 1 --gamma .9 --saveevery 1 $FLAGS
+	;;    
     *)
-	echo "Usage : $0 {1|2|3|4|5}"
+	echo "Usage : $0 {1|2|3|4|5|6}"
 	;;
 esac

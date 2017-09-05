@@ -153,6 +153,12 @@ if(config == 5) {
   uyy = 0;
  }
 
+if(config == 6) {
+  clx = y*(.3-y);
+  cly = 0;
+ }
+
+
 
 problem stokes([ux, uy, p], [vx, vy, q]) =
   int2d(Th)(2*mu*tr(EPS(ux,uy))*EPS(vx,vy) - p * div(vx,vy))
@@ -223,7 +229,8 @@ macro regulbord() {
     +int1d(Th,3)(gamma1*tr(gradT(dpy))*gradT(phiy))
     +int1d(Th,3)(gradDF*dotN(phix, phiy))
     +on(1, 2, dpx=0)
-    +on(1, 2, dpy=0);
+    +on(1, 2, dpy=0)
+    +on(4, dpx=0);
 } //EOM
 	   
 string strname = getARGV("--resu", "");
@@ -254,7 +261,9 @@ ofstream j0of(strname+"/J0");
  j0of.flush;
 }
 
+
 sv = 1+errc; // Arbitrary choice of sv such that sv > errc
+r << J << " " <<  EL << " " << contr(Th) << " " << l << " " << sv << " " << b << " " << minarea << endl;
 for (jj = 0; (sv > errc) && (jj < jjmax); jj++) {
   for (ii = 0; ii < iimax; ii++) {
     Th2 = Th;
