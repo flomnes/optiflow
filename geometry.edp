@@ -120,6 +120,30 @@ if (config == 6) { // Pipe with sliding outlet
   Th = adaptmesh(Th, IsMetric=1, 1./30);
  }
 
+
+if (config == 7) {
+  real l1 = 2;
+  real l2 = 1;
+  real h1 = 1;
+  real h2 = 4;
+  real r = .2;
+  
+  border b1(t=0,1){x=param(0,l1-r,t);y=-h1/2;label=3;};
+  border b2(t=0,1){x=circlearcx(l1-r,r,pi/2,0,t);y=circlearcy(-h1/2-r,r,pi/2,0,t);label=3;};
+  border b3(t=0,1){x=l1;y=param(-h1/2-r,-h2/2,t);label=3;};
+  border b4(t=0,1){x=param(l1,l1+l2,t);y=-h2/2;label=2;};
+  border b5(t=0,1){x=l1+l2;y=param(-h2/2,h2/2,t);label=3;};
+  border b6(t=0,1){x=param(l1+l2,l1,t);y=h2/2;label=2;};
+  border b7(t=0,1){x=l1;y=param(h2/2,h1/2+r,t);label=3;};
+  border b8(t=0,1){x=circlearcx(l1-r,r,0,-pi/2,t);y=circlearcy(h1/2+r,r,0,-pi/2,t);label=3;};
+  border b9(t=0,1){x=param(l1-r,0,t);y=h1/2;label=3;};
+  border b10(t=0,1){x=0;y=param(h1/2,-h1/2,t);label=1;};
+  Th = buildmesh(b1(pp)+b2(pp/2)+b3(pp)+b4(pp)+b5(pp)+b6(pp)+b7(pp)+b8(pp/2)+b9(pp)+b10(pp));
+  Th = adaptmesh(Th, IsMetric=1, 1./10);
+  plot(Th);
+ }
+
+
 savemesh(Th,"meshes/mesh"+config+".mesh");
 //savemesh(Th,"meshes/mesh"+config+".msh");
 
