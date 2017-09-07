@@ -20,7 +20,7 @@ Optiflow is an implementation of a shape-optimization method for two-dimensional
 
 #### Usage
 
-Five examples can be found in the file run_case.sh. The general syntax is
+Seven examples can be found in the file run_case.sh. The general syntax is
 ```
 FreeFem++-nw main.edp [--config numconfig] [--resu resfolder] [numerical parameters]
 ```
@@ -57,9 +57,12 @@ A file called "multi.pdf" will be generated.
 
 2. Crashes may occur for because of mesh self-intersections. You may try to choose a smaller value for `tau`. You can also increase the value of `minarea` so that remeshing will be done earlier.
 
+#### Test-cases 6 & 7
+Test-cases 6 and 7 are given as additional material. In test-case 6, a simple pipe is considered. On the left, fixed inlet, and on the right, an outlet allowed to move tangentially. In test-case 7, a double-pipe is considered, with an inlet on the left and two outlets on the right. The closing of one of the outlets entails mesh self-intersections.
+
 #### Authors & contributors
 * optiflow has been developped by Florian Omnès (Université Pierre et Marie-Curie), Yannick Privat (Université Pierre et Marie Curie, CNRS), Charles Dapogny (Université Grenobles-Alpes, CNRS) and Pascal Frey (Université Pierre et Marie Curie, Institut du Calcul et des Données)
-* Anyone wishing to contribute is welcome
+* Anyone wishing to contribute is welcome to suggest modification through a push request.
 
 #### License
 optiflow is licensed under the terms of the LGPL (LICENSE.md)

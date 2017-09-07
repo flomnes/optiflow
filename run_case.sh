@@ -26,8 +26,11 @@ case "$1" in
     6)
 	echo "Launching test-case 6"
 	$FF main.edp --config 6 --resu resu/case6 --binit 1e1 --btarget 1e2 --cv 1 --tau 1e-2 --l0 0 --optraff 0 --raffinit 3e-2 --beta 1 --gamma .9 --saveevery 1 $FLAGS
-	;;    
+	;;
+    7)
+	echo "Launching test-case 7"
+	$FF main.edp --config 7 --resu resu/case7 --l0 0 --binit 1e-1 --btarget 1e2 --cv .9 --tau 3e-2 --gamma .3 --errc 5e-3 --saveevery 3 --navsto 0 --optraff 1 --minarea .01 --raffinit .1 $FLAGS
     *)
-	echo "Usage : $0 {1|2|3|4|5|6}"
+	echo "Usage : $0 {1|2|3|4|5|6|7}"
 	;;
 esac
