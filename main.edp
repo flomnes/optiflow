@@ -199,8 +199,7 @@ macro ns () {
 	  ux[] += dux[];
 	  uy[] += duy[];
 	  p[]  += dp[];
-	  real Lu1=ux[].l2,  Lu2 = uy[].l2 , Lp = p[].l2;
-	  err= dux[].l2/Lu1 + duy[].l2/Lu2 + dp[].l2/Lp;
+	  err = sqrt(int2d(Th)(tr(GRAD(dux,duy))*GRAD(dux,duy) + tr([dux,duy])*[dux,duy]) / int2d(Th)(tr(GRAD(ux,uy))*GRAD(ux,uy) + tr([ux,uy])*[ux,uy]));
 	  cout << ".";
 	  cout.flush;
 	  if(err < arrns) break;
