@@ -13,7 +13,7 @@ case "$1" in
 	;;
     3)
 	echo "Launching test-case 3"
-	$FF main.edp --config 3 --resu resu/case3 --binit 0 --btarget 0 --cv 1 --tau 1e-2 --l0 0 --raffinit 5e-2 --gamma .01 --jjmax 30 $FLAGS
+	$FF main.edp --config 3 --resu resu/case3 --binit 0 --btarget 0 --cv 1 --tau 1e-2 --l0 0 --raffinit 5e-2 --gamma .01 --jjmax 30 --delta 0 $FLAGS
 	;;
     4)
 	echo "Launching test-case 4"
