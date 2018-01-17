@@ -9,7 +9,8 @@ case "$1" in
 	;;
     2)
 	echo "Launching test-case 2"
-	$FF main.edp --config 2 --resu resu/case2 --l0 0 --binit 1e-1 --btarget 1e1 --cv 1 --tau 5e-2 --gamma 1 --errc 5e-3 $FLAGS
+	$FF main.edp --config 2 --resu resu/case2 --l0 0 --binit 1e-1 --btarget 1e1 --cv 1 --tau 1e-2 --gamma 1e-2 --errc 5e-3 $FLAGS
+	
 	;;
     3)
 	echo "Launching test-case 3"
