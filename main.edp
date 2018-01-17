@@ -336,7 +336,6 @@ for (jj = 0; (sv > errc) && (jj < jjmax); jj++) {
     plot(mx, fill=1, value=1,cmm="\|V\|", ps=strname+"/gradnorm"+ct+".ps");
   
     plot(Th, ps=strname+"/mesh"+ct+".ps", wait=0, value=1, cmm="Iteration "+jj+"/"+jjmax+" (config "+config+")");
-    plot(Th, ps=strname+"/mesh.nv"+ct+".ps", wait=0);    
     savemesh(Th, strname+"/mesh"+ct+".msh");
     
     ct++;
