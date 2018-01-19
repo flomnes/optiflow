@@ -1,6 +1,6 @@
-int rgfl;
+/* Macros used throughout the code */
 
-
+/* Horizontal component of a typical Poiseuille flow */
 func real poiseuillex(real xa,real ya,real xb,real yb,real xx,real yy) {
   real alpha = 1;
   real ymin = min(ya, yb);
@@ -12,7 +12,7 @@ func real poiseuillex(real xa,real ya,real xb,real yb,real xx,real yy) {
   return (yy>ymin)*(yy<ymax)*(xx>xmin)*(xx<xmax)*alpha*s*(1-s)*(-(yb-ya));
 }
 
-
+/* Vertical component of a typical Poiseuille flow */
 func real poiseuilley(real xa,real ya,real xb,real yb,real xx,real yy) {
   real alpha = 1;
   real ymin = min(ya, yb);
@@ -23,36 +23,66 @@ func real poiseuilley(real xa,real ya,real xb,real yb,real xx,real yy) {
   return (yy>ymin)*(yy<ymax)*(xx>xmin)*(xx<xmax)*alpha*s*(1-s)*((xb-xa));
 }
 
-// [30/03/2016] Vérifié
+/* Strain tensor */
 macro EPS(u, v) [dx(u), 1./2*(dx(v)+dy(u)), 1./2*(dx(v)+dy(u)), dy(v)] // EOM
-macro GRAD(u, v) [dx(u), dy(u), dx(v), dy(v)] // EOM
-macro UgradV(u1,u2,v1,v2) [ [u1,u2]'*[dx(v1),dy(v1)] , [u1,u2]'*[dx(v2),dy(v2)] ]// 
-macro div(u, v) (dx(u)+dy(v)) // EOM
-//Correction 15/06/2016
-macro SIG(u, v) [2*muela*dx(u) + laela*div(u,v), muela*(dx(v)+dy(u)), muela*(dx(v)+dy(u)), 2*muela*dy(v) + laela*div(u,v)] //EOM     
-macro MN(M) [M[0]*N.x+M[1]*N.y, M[2]*N.x+M[3]*N.y] //EOM
-macro tr(u) u' //EOM /* ' */
-macro vol(Th) int2d(Th)(1.) //EOM
-macro perim(Th) int1d(Th)(1.) //EOM
-macro contr(Th) (beta*int2d(Th)(1.)+(1.-beta)*int1d(Th)(1.)) //EOM
-macro dotN(u1,u2) (u1*N.x+u2*N.y) //EOM
-macro dotT(u1,u2) (u1*N.y-u2*N.x) //EOM
-macro IJ() (-2*delta*mu*tr(EPS(ux,uy))*EPS(ux,uy) + 2*mu*tr(EPS(ux,uy))*EPS(vx,vy)) //EOM
 
+/* Jacobian matrix */
+macro GRAD(u, v) [dx(u), dy(u), dx(v), dy(v)] // EOM
+
+/* (u \cdot \nabla) V */
+macro UgradV(u1,u2,v1,v2) [ [u1,u2]'*[dx(v1),dy(v1)] , [u1,u2]'*[dx(v2),dy(v2)] ]// EOM
+
+/* Divergence of u */
+macro div(u, v) (dx(u)+dy(v)) // EOM
+
+/* Stress tensor involved in the elasticity system for velocity extension/regularization */
+macro SIG(u, v) [2*muela*dx(u) + laela*div(u,v), muela*(dx(v)+dy(u)), muela*(dx(v)+dy(u)), 2*muela*dy(v) + laela*div(u,v)] //EOM
+
+/* Normal component of the matrix M */
+macro MN(M) [M[0]*N.x+M[1]*N.y, M[2]*N.x+M[3]*N.y] //EOM
+
+/* Transpose of M */
+macro tr(M) M' //EOM
+
+/* u \cdot n for a vector function u=(u1,u2) */
+macro dotN(u1,u2) (u1*N.x+u2*N.y) //EOM
+
+/* u \cdot \tau for a vector function u=(u1,u2) */
+macro dotT(u1,u2) (u1*N.y-u2*N.x) //EOM
+
+/* Objective function = weighted sum of energy dissipation and least-square difference with a
+ prescribed flow */
 macro J() (2*delta*mu*int2d(Th)(tr(EPS(ux,uy))*EPS(ux,uy)) + ((1.-delta)/2)*int1d(Th,2)((ux-uxx)^2+(uy-uyy)^2)) //EOM
 
+/* Shape derivative of the objective function */
+macro IJ() (-2*delta*mu*tr(EPS(ux,uy))*EPS(ux,uy) + 2*mu*tr(EPS(ux,uy))*EPS(vx,vy)) //EOM
+
+/* Volume of a shape supplied by mesh Th */
+macro vol(Th) int2d(Th)(1.) //EOM
+
+/* Perimeter of the contour of a shape supplied by mesh Th */
+macro perim(Th) int1d(Th)(1.) //EOM
+
+/* Constraint function = weighted sum of volume and perimeter */
+macro contr(Th) (beta*int2d(Th)(1.)+(1.-beta)*int1d(Th)(1.)) //EOM
+
+/* Augmented Lagrangian */
 macro EL() (J/J0 + l*(contr(Th) - ctarget)/c0 + b/2 * ((contr(Th) - ctarget)^2)/(c0^2)) //EOM
 
 //macro gradV() (IJ/J0 + l/vol0 + b*(vol(Th)-voltarget)/(vol0^2)) //EOM
 
+/* Shape gradient of the constraint function */
 macro gradC() (beta*1+(1.-beta)*kappa) //EOM
 macro gradCG() (y) //EOM
 macro gradDF() (IJ/J0 + l*gradC/c0 + b*gradC*(contr(Th)-ctarget)/(c0^2)) //EOM
 
+/* (Vector) gradient of a scale function u */
 macro grad(u) [dx(u), dy(u)] // EOM
+
+/* (Scalar) tangential derivative of a scalar function u */
 macro gradT(u) (grad(u) - grad(u)'*[N.x, N.y]*[N.x, N.y]) // EOM
 
-
+/* Those 3 functions seem to be unused */
 macro savef() {
       wx[] = ux[];
       wy[] = uy[];

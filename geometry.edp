@@ -36,7 +36,8 @@ Free boundary 3
 
 string meshname = getARGV("--mesh", "");
 
-if (config == 1) { // Tuyau avec Entrée & sortie perpendiculaires
+/* Bend with orthogonal inlet and outlet */
+if (config == 1) {
   int n=1;
   border in(t=0,1) {x=param(0,1./3,t); y=0; label = 2;};
   border sig1(t=0,1){x=circlearcx(1,2./3,pi,pi/2,t^n);y=circlearcy(0,2./3,pi,pi/2,t^n);label=3;};

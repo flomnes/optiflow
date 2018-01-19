@@ -7,103 +7,119 @@ include "curvature.edp"
 
 int config = getARGV("--config", 1);
 
+/* Characteristic length of the domain; used in the definition of the geometry */
 real ll = 1.5;
-mesh Th;
+
+mesh Th,Th2; // Th = actual mesh; Th2 = tentative mesh
+
+/* Load initial mesh */
 string meshname = "meshes/mesh"+config+".mesh";
 cout << "Loading mesh " << meshname << "...";
 Th = readmesh(meshname);
 cout << "done." << endl;
 cout.flush;
 
-mesh Th2;
-
 cout.precision(12);
 
-/* Save results */
-int save = getARGV("--save", 1);
 //////////////////////////////////////////////////////////////////////////
 
 /* Numerical parameters */
-real mu = 1./200;
+real mu = 1./200;    //viscosity
 real muer = 1;
 
-real binit = getARGV("--binit", 1e-2);
-real btarget = getARGV("--btarget", 1e1);
+//////////////////////////////////////////////////////////////////////////
+////////////  Parameters from the command line  //////////////////////////
+//////////////////////////////////////////////////////////////////////////
 
-real errc = getARGV("--errc", 1e-2);
-real tau = getARGV("--tau", 1e-3);
-real cv = getARGV("--cv", 1.0);
-real l0 = getARGV("--l0", 1e1);
+real l0 = getARGV("--l0", 1e1); /* Value of the initial Lagrange multiplier coefficient in the def. of the augmented Lagrangian */
+real binit = getARGV("--binit", 1e-2);  // Initial value of the penalty coefficient b in the augmented Lagrangian
+real btarget = getARGV("--btarget", 1e1); // Maximum value of the penalty coefficient b in the augmented Lagrangian
 
-real alpha = getARGV("--alpha", 1.05);
+real errc = getARGV("--errc", 1e-2); // Stopping criterion of the main optimization loop: the L^2 norm of the shape gradient is < errc
+real tau = getARGV("--tau", 1e-3); // Initial time step
+real cv = getARGV("--cv", 1.0);  /* Target volume (resp. perimeter) = cv * initial volume (resp. perimeter) */
+
+real alpha = getARGV("--alpha", 1.05); // Multiplication factor for the increase in the penalty in the augmented Lagrangian
+
+/* Balance parameter between the energy dissipation and the least-square error in the objective function 
+  delta = 1 => energy dissipation ; delta = 0 => least-square error */
 real delta = getARGV("--delta", 1.);
-
 
 real kc = getARGV("--kc", 1.); /* Set to -1 to compute the curvature on an obstacle in \Omega, +1 otherwise (default value) */
 
-int iimax = getARGV("--iimax", 5);
-int jjmax = getARGV("--jjmax", 1000);
+int iimax = getARGV("--iimax", 5);  /* Maximum number of iterations for the inner line search loop */
+int jjmax = getARGV("--jjmax", 1000); /* Maximum number of iterations for the outer main optimization loop */
 int kkmax = getARGV("--kkmax", 3);
 
+/* Weight for the volume and the perimeter in the constraint function; 
+ beta = 1 => volume; beta = 0 => perimeter */
 real beta = getARGV("--beta", 1.);
 
 real rafftarget = getARGV("--rafftarget", 1e30); /* Par défaut, pas de raffinement variable */
 real raffinit = getARGV("--raffinit",1./30);
 int optraff = getARGV("--optraff", 1);
 int navsto = getARGV("--navsto", 1); /* 1 = Navier-Stokes, 0 = Stokes. Default = 1 */
-real gamma = getARGV("--gamma", 1.);
-real minarea0 = getARGV("--minarea", 1e-4);
-int every = getARGV("--saveevery", 3);
 
-real minarea;
+real gamma = getARGV("--gamma", 1.); // Parameter in the extension / regularization problem
 real gamma1 = 1-gamma;
 
-real epsilon = 1e-6;
+real minarea0 = getARGV("--minarea", 1e-4);
+real minarea;
+
+int every = getARGV("--saveevery", 3); // Save intermediate shape each "every" iteration
+int save = getARGV("--save", 1); // save = 1 => save results
+
+real epsilon = 1e-6; // Penalization parameter for the pressure in the Stokes equation
 real epspen = 1e-6;
 real arrns = 1e-6;
 int ii, jj, kk;
 
-real sv;
-
 real J0, J1, L, L0 ,L1;
 real tau1;
-real l = l0;
+
 real kmax;
 
 real raff = raffinit;
-real b = binit;
+
+real l = l0; // Initial value of the Lagrange multiplier in the definition of the augmented Lagrangian
+real b = binit; // Initial value of the penalty coefficient in the augmented Lagrangian
 
 /* Connectivity data */
 int[int,int] ordre(1,1);
 
 int ct = 0;
-int adaptcount = 0;
 
 /* Constraint data */
-real vol0 = vol(Th);
-real p0 = perim(Th);
-real voltarget = cv * vol0;
-real pertarget = cv * p0;
-real ctarget = beta*voltarget + (1-beta)*pertarget;
-real c0 = beta*vol0 + (1-beta)*p0;
+real vol0 = vol(Th); // Volume of the initial shape
+real p0 = perim(Th); // Perimeter of the initial shape
+real c0 = beta*vol0 + (1-beta)*p0; // Value of the constraint function for the initial shape
+real voltarget = cv * vol0; // Target volume
+real pertarget = cv * p0;  // Target perimeter
+real ctarget = beta*voltarget + (1-beta)*pertarget; // Target value of the constraint
+
+/* Lamé coefficients for the linearized elasticity system involved in the velocity extension / regularization */
+real muela = 0.5;
+real laela = 1;
+
+/* Other parameters */
 real multint;
-
-
+int adaptcount = 0; // Counter for the number of mesh adaptations loops inside a single line search
+real sv; // Stores the actual L^2 norm of the shape gradient
 
 //////////////////////////////////////////////////////////////////////////
-
+//////  Definition of the Finite Element spaces and FE functions  ////////
+//////////////////////////////////////////////////////////////////////////
 fespace Qh(Th, P1);
 fespace Vh(Th,P2);
 fespace P0h(Th,P0);
 
-Vh ux, uy, vx, vy, wx, wy, dux, duy, uxx, uyy, clx, cly;
-Qh p,q, mx, dpx, dpy, dp, qq, phix, phiy, kappa, phi, psi;
-P0h pn;
+Vh    ux, uy, vx, vy, wx, wy, dux, duy, uxx, uyy, clx, cly;
+Qh    p,q, mx, dpx, dpy, dp, qq, phix, phiy, kappa, phi, psi;
+P0h   pn;
 
-real muela = .5, laela = 1;
-
-
-
+//////////////////////////////////////////////////////////////////////////
+/////  Definition of the entrance flow, depending on the test case  //////
+//////////////////////////////////////////////////////////////////////////
 if(config == 1) {
   clx = (1-y)*(2./3-y);
   cly = 0;
@@ -164,6 +180,9 @@ if(config == 7) {
   cly = 0;
  }
 
+//////////////////////////////////////////////////////////////////////////
+/////////////  Variational Problem for the Stokes equation  //////////////
+//////////////////////////////////////////////////////////////////////////
 problem stokes([ux, uy, p], [vx, vy, q]) =
   int2d(Th)(2*mu*tr(EPS(ux,uy))*EPS(vx,vy) - p * div(vx,vy))
   +int2d(Th)(div(ux,uy)*q)
@@ -172,58 +191,62 @@ problem stokes([ux, uy, p], [vx, vy, q]) =
   +on(3,ux=0,uy=0)
   +on(1,ux=clx, uy=cly);
 
-/* Vérifié le 28/06/2016 */
-macro ns () {
-  {
-    stokes;
-    if(navsto) {
 
-      int n;
-      real err=0;
-      cout << "Navier-Stokes";
-      for( n=0;n< 15;n++) /* Newton Loop  */
-	{
-	  solve Oseen([dux,duy,dp],[vx,vy,qq]) =
-	    int2d(Th)(2*mu*tr(EPS(dux,duy))*EPS(vx,vy)
+//////////////////////////////////////////////////////////////////////////
+//////////////////  Macro for the Navier-Stokes equation  ////////////////
+//////////////////////////////////////////////////////////////////////////
+macro ns () {
+  // Initialize Newton loop with the solution of Stokes
+  stokes;
+    
+  if(navsto) {
+    int n;
+    real err=0;
+    cout << "Navier-Stokes";
+    /* Newton Loop  */
+    for(n=0; n< 15; n++) {
+      solve Oseen([dux,duy,dp],[vx,vy,qq]) =
+	      int2d(Th)(2*mu*tr(EPS(dux,duy))*EPS(vx,vy)
 		      + tr(UgradV(dux,duy, ux, uy))*[vx,vy]
 		      + tr(UgradV(ux,uy,dux,duy))*[vx,vy]
 		      - div(dux,duy)*qq - div(vx,vy)*dp
-		      /* + pn*(dux*vx+duy*vy) /\* MATMOU *\/ */
-		      - epsilon*dp*qq) 
-	    +int2d(Th)(2*mu*tr(EPS(ux,uy))*EPS(vx,vy)
+		      - epsilon*dp*qq)
+	      +int2d(Th)(2*mu*tr(EPS(ux,uy))*EPS(vx,vy)
 		       + tr(UgradV(ux,uy, ux, uy))*[vx,vy]
 		       - div(ux,uy)*qq - div(vx,vy)*p
 		       - epsilon*p*qq)
-	    +on(1,3,dux=0,duy=0);
+	      +on(1,3,dux=0,duy=0);
 
-	  ux[] += dux[];
-	  uy[] += duy[];
-	  p[]  += dp[];
-	  err = sqrt(int2d(Th)(tr(GRAD(dux,duy))*GRAD(dux,duy) + tr([dux,duy])*[dux,duy]) / int2d(Th)(tr(GRAD(ux,uy))*GRAD(ux,uy) + tr([ux,uy])*[ux,uy]));
-	  cout << ".";
-	  cout.flush;
-	  if(err < arrns) break;
-	}
-      if(err > arrns)
-	{
-	  cout << "NS Warning : non convergence : err = " << err << " / eps = " << epsilon << endl;
-	}
+      ux[] += dux[];
+      uy[] += duy[];
+      p[]  += dp[];
+      err = sqrt(int2d(Th)(tr(GRAD(dux,duy))*GRAD(dux,duy) + tr([dux,duy])*[dux,duy]) / int2d(Th)(tr(GRAD(ux,uy))*GRAD(ux,uy) + tr([ux,uy])*[ux,uy]));
+      cout << ".";
+      cout.flush;
+      if(err < arrns) break;
+    }
+    /* Newton loop has not converged */
+    if(err > arrns) {
+      cout << "NS Warning : non convergence : err = " << err << " / eps = " << epsilon << endl;
     }
   }
   cout << endl;
 }//EOF
 
-/* Vérifié le 28/06/2016 */
+//////////////////////////////////////////////////////////////////////////
+///////////////  Macro for the adjoint Navier-Stokes equation  ///////////
+//////////////////////////////////////////////////////////////////////////
 macro adjoint() {
     solve probadjoint([vx, vy, q], [wx, wy, qq]) =
       int2d(Th) (2*mu*tr(EPS(vx, vy))*EPS(wx, wy) - q*div(wx, wy) -qq * div(vx, vy) + navsto*(tr(UgradV(wx, wy, ux, uy))*[vx, vy] + tr(UgradV(ux,uy,wx,wy))*[vx,vy]))
       +int2d(Th)(- 4*mu*delta*tr(EPS(ux,uy))*EPS(wx,wy))
       +int1d(Th,2)(-(1-delta)*((ux-uxx)*wx+(uy-uyy)*wy))
-      
       +on(1,3,5, vx=0, vy=0);
-    /* plot([vx, vy], wait=1, cmm="adjoint");     */
 }//EOM
 
+//////////////////////////////////////////////////////////////////////////
+////////  Macro for the velocity extension/regularization problem  ///////
+//////////////////////////////////////////////////////////////////////////
 macro regulbord() {
   solve regb([dpx, dpy],[phix, phiy]) =
     int2d(Th)(gamma*tr(SIG(dpx, dpy))*EPS(phix, phiy))
@@ -245,7 +268,7 @@ savemesh(Th, strname+"/initmesh.msh");
 ofstream cmd(strname+"/commande.sh");
 for(int ii = 0; ii < ARGV.n; ii++) {
   cmd << ARGV[ii] << " ";
- }
+}
 cmd << endl;
 cmd.flush;
 ofstream r(strname+"/out.dat");
@@ -253,11 +276,18 @@ ofstream volc(strname+"/voltarget");
 volc << ctarget << endl;
 volc.flush;
 
+/* Calculation of the mean curvature */
 calculconnect(Th, ordre);
 courbure(Th, ordre, kappa[]);
-kappa = kc * kappa;
-ns;	    
+kappa = kc * kappa; // Adjust sign
+
+/* Solve Navier-Stokes equations on the initial shape */
+ns;
+
+/* Initial value of the objective function */
 J0 = J;
+
+/* Save initial value of J */
 {
 ofstream j0of(strname+"/J0");
  j0of << J0 << endl;
@@ -265,67 +295,93 @@ ofstream j0of(strname+"/J0");
 }
 
 
-sv = 1+errc; // Arbitrary choice of sv such that sv > errc
+sv = 1+errc; // Arbitrary choice of sv such that sv > errc (to ensure to enter the main loop)
+
+/* output of initial data */
 r << J << " " <<  EL << " " << contr(Th) << " " << l << " " << sv << " " << b << " " << minarea << endl;
+
+/* Start of the main loop; ending criterion: sv = L^2 norm of the shape gradient is < errc */
 for (jj = 0; (sv > errc) && (jj < jjmax); jj++) {
+  
+  /* Line search inner loop */
   for (ii = 0; ii < iimax; ii++) {
-    Th2 = Th;
-    ns;
-    adjoint;
+    Th2 = Th; // Update the geometry
+    ns;      // Solve the NS equation
+    adjoint;  // Solve the adjoint system
+    /* Solve the velocity extension/regularization problem to get the descent direction; 
+       the descent direction is [dpx,dpy] */
     regulbord;
-    L0 = EL;
+    L0 = EL;  // Value of the augmented Lagrangian
     tau1 = tau;
+    
     for (kk = 0;kk < kkmax; kk++) {
       cout << "movemesh tau = "<< tau1 << endl;
       minarea = checkmovemesh(Th2, [x + tau1*dpx, y + tau1*dpy]);
+      
+      /* Try to adapt the mesh in case one of the triangles becomes degenerate */
       if(optraff) {
-	if (minarea > minarea0 || adaptcount>=3) {
-	  Th = movemesh(Th2, [x + tau1*dpx, y + tau1*dpy]);
-	} else {
-	    cout << "*** ADAPTMESH *** minarea = " << minarea << " minarea0 = " << minarea0 << endl;
-	    Th = adaptmesh(Th, hmax=raff, hmin=raff/sqrt(2), ratio=1.5);
-	    cout << " new minarea = " << minarea << endl;
-	    minarea = checkmovemesh(Th2, [x + tau1*dpx, y + tau1*dpy]);
+	    if (minarea > minarea0 || adaptcount>=3) {
+	      Th = movemesh(Th2, [x + tau1*dpx, y + tau1*dpy]);
+	    }
+        else {
+	      cout << "*** ADAPTMESH *** minarea = " << minarea << " minarea0 = " << minarea0 << endl;
+	      Th = adaptmesh(Th, hmax=raff, hmin=raff/sqrt(2), ratio=1.5);
+	      cout << " new minarea = " << minarea << endl;
+	      minarea = checkmovemesh(Th2, [x + tau1*dpx, y + tau1*dpy]);
 
-	    kappa = 0; /* DO NOT REMOVE */
-	    calculconnect(Th, ordre);
-	    adaptcount++;
-	  }
-	if(adaptcount>3) {
-	    cout << "Too many consecutive mesh adaptations. Giving up mesh adaptation" << endl;
-	  }
-      } else {
-	Th = movemesh(Th2, [x + tau1*dpx, y + tau1*dpy]);
+	      kappa = 0; /* DO NOT REMOVE */
+	      calculconnect(Th, ordre);
+	      adaptcount++;
+	    }
+	    if(adaptcount>3) {
+	      cout << "Too many consecutive mesh adaptations. Giving up mesh adaptation" << endl;
+	    }
       }
-
+      else {
+	    Th = movemesh(Th2, [x + tau1*dpx, y + tau1*dpy]);
+      }
+      
+      /* Calculate the mean curvature of the new shape */
       courbure(Th, ordre, kappa[]);
       kappa = kc * kappa;
+      
+      /* Solve the Navier-Stokes and adjoint equations on the new shape */
       ns;
       adjoint;
+      
+      /* New value of the objective function */
       L1 = EL;
       tau1/= 2;
       cout << "L = " << L1 << " / L0 = " << L0 << " (variation = " << 100*(L1-L0)/L0 << "%)" << endl;
+     
+      /* Accept iteration as soon as the value of the augmented Lagrangian is decreased */
       if (L1 < L0) {
-	break;
+	    break;
       }
     }
+    
     cout << "kk = " << kk << endl;
+    
+    /* Maximum number of iterations has been reached, and no decrease in the value of the augmented Lagrangian is observed */
     if (kk == kkmax) {
       cout << "Warning : L_{n+1}>L_{n} (L0 = " << L0 << ", l = " << l << ")" << endl;
       ii = iimax; /* Update the Lagrange multiplier, since we can't further decrease L */
     }
+    
+    /* L^2 norm of the shape gradient */
     sv = sqrt(int1d(Th, 3)(dpx^2+dpy^2));
-/* OUTPUT */
+    
+    /* Print output */
       r << J << " " <<  EL << " " << contr(Th) << " " << l << " " << sv << " " << b << " " << minarea << endl;
   }
 
+  /* Update of the values of the coefficients of the augmented Lagrangian */
   l = l + b * (contr(Th) - ctarget);
   if (b < btarget) {
     b *= alpha;
   }
 
-  /* Save post-processing data */
-  
+  /* Plot shape and save post-processing data */
   if(save && (jj % every == 0)) {
     plot(Th, [dpx, dpy], ps=strname+"/displacement"+ct+".ps", wait=0, value=1, cmm="Iteration "+jj+"/"+jjmax+" (config "+config+")");
     Vh tmpvh = tr(EPS(ux,uy))*EPS(ux,uy);
@@ -343,12 +399,11 @@ for (jj = 0; (sv > errc) && (jj < jjmax); jj++) {
     J1 = J;
     cout << "jj = " << jj << endl;
   }
- }
+}
 
-
-/* Save post-processing data */
+/* Save the final shape */
 if(save) {
   plot(Th, [ux,uy], ps=strname+"/velocity.ps", cmm="Velocity", wait=0);
   savemesh(Th, strname+"/mesh_final.msh");
   r.flush;
- }
+}
