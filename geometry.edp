@@ -1,3 +1,10 @@
+/* Florian OMNES (florian.omnes@upmc.fr) */
+/* Charles DAPOGNY (charles.dapogny@univ-grenoble-alpes.fr) */
+/* Pascal FREY (pascal.frey@upmc.fr) */
+/* Yannick PRIVAT (yannick.privat@upmc.fr */
+/* Copyright Sorbonne-Universités 2015-2018 */
+/* PLEASE DO NOT REMOVE THIS BANNER */
+
 include "getARGV.idp"
 int config = getARGV("--config", 0);
 
@@ -38,11 +45,10 @@ string meshname = getARGV("--mesh", "");
 
 /* Bend with orthogonal inlet and outlet */
 if (config == 1) {
-  int n=1;
   border in(t=0,1) {x=param(0,1./3,t); y=0; label = 2;};
-  border sig1(t=0,1){x=circlearcx(1,2./3,pi,pi/2,t^n);y=circlearcy(0,2./3,pi,pi/2,t^n);label=3;};
+  border sig1(t=0,1){x=circlearcx(1,2./3,pi,pi/2,t);y=circlearcy(0,2./3,pi,pi/2,t);label=3;};
   border out(t=0,1) {x=1; y=param(2./3,1,t);label=1;};
-  border sig2(t=0,1){x=circlearcx(1,1,pi/2,pi,1-(1-t)^n);y=circlearcy(0,1,pi/2,pi,1-(1-t)^n);label=3;};
+  border sig2(t=0,1){x=circlearcx(1,1,pi/2,pi,1-(1-t));y=circlearcy(0,1,pi/2,pi,1-(1-t));label=3;};
   Th = buildmesh(in(pp/2)+sig1(pp)+out(pp/2)+sig2(pp));
   Th = adaptmesh(Th, IsMetric=1, 1./30);
  }

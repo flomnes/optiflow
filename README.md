@@ -65,4 +65,4 @@ Test-cases 6 and 7 are given as additional material. In test-case 6, a simple pi
 * Anyone wishing to contribute is welcome to suggest modification through a push request.
 
 #### License
-optiflow is licensed under the terms of the LGPL (LICENSE.md)
+optiflow is licensed under the terms of the LGPL (LICENSE.md). Copyright Sorbonne-Universités 2016-2018.

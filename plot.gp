@@ -1,3 +1,11 @@
+# Florian OMNES (florian.omnes@upmc.fr)
+# Charles DAPOGNY (charles.dapogny@univ-grenoble-alpes.fr)
+# Pascal FREY (pascal.frey@upmc.fr)
+# Yannick PRIVAT (yannick.privat@upmc.fr
+# Copyright Sorbonne-Universités 2015-2018
+# PLEASE DO NOT REMOVE THIS BANNER
+
+
 set terminal pdfcairo size 20cm, 15cm
   set output "multi.pdf"
   set multiplot
