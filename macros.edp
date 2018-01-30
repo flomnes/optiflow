@@ -73,7 +73,6 @@ macro EL() (J/J0 + l*(contr(Th) - ctarget)/c0 + b/2 * ((contr(Th) - ctarget)^2)/
 
 /* Shape gradient of the constraint function */
 macro gradC() (beta*1+(1.-beta)*kappa) //EOM
-macro gradCG() (y) //EOM
 macro gradDF() (IJ/J0 + l*gradC/c0 + b*gradC*(contr(Th)-ctarget)/(c0^2)) //EOM
 
 /* (Vector) gradient of a scale function u */
@@ -82,29 +81,3 @@ macro grad(u) [dx(u), dy(u)] // EOM
 /* (Scalar) tangential derivative of a scalar function u */
 macro gradT(u) (grad(u) - grad(u)'*[N.x, N.y]*[N.x, N.y]) // EOM
 
-/* Those 3 functions seem to be unused */
-macro savef() {
-      wx[] = ux[];
-      wy[] = uy[];
-      q[] = p[];
-} //EOM
-
-macro restoref() {
-      ux = ux;
-      uy = uy;
-      p = p;
-      ux[] = wx[];
-      uy[] = wy[];
-      p[] = q[];
-} //EOM
-
-macro adapt(Th) {
-problem lap(phix,phiy) =
-  int2d(Th)(tr(grad(phix))*grad(phiy) + phix*phiy)
-  +on(3,phix=1);
-
- lap;
- plot(Th,phix, wait=1);
- phix = abs(phix);
- Th = adaptmesh(Th, phix);
-} //EOM
