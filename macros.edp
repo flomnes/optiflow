@@ -59,10 +59,10 @@ macro dotT(u1,u2) (u1*N.y-u2*N.x) //EOM
 
 /* Objective function = weighted sum of energy dissipation and least-square difference with a
  prescribed flow */
-macro J() (2*delta*mu*int2d(Th)(tr(EPS(ux,uy))*EPS(ux,uy)) + ((1.-delta)/2)*int1d(Th,2)((ux-uxx)^2+(uy-uyy)^2)) //EOM
+macro J() (2*delta*nu*int2d(Th)(tr(EPS(ux,uy))*EPS(ux,uy)) + ((1.-delta)/2)*int1d(Th,2)((ux-uxx)^2+(uy-uyy)^2)) //EOM
 
 /* Shape derivative of the objective function */
-macro IJ() (-2*delta*mu*tr(EPS(ux,uy))*EPS(ux,uy) + 2*mu*tr(EPS(ux,uy))*EPS(vx,vy)) //EOM
+macro IJ() (-2*delta*nu*tr(EPS(ux,uy))*EPS(ux,uy) + 2*nu*tr(EPS(ux,uy))*EPS(vx,vy)) //EOM
 
 /* Volume of a shape supplied by mesh Th */
 macro vol(Th) int2d(Th)(1.) //EOM

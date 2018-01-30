@@ -1,5 +1,10 @@
 /* Florian OMNES (florian.omnes@upmc.fr) */
-/* 2015-2016 */
+/* Charles DAPOGNY (charles.dapogny@univ-grenoble-alpes.fr) */
+/* Pascal FREY (pascal.frey@upmc.fr) */
+/* Yannick PRIVAT (yannick.privat@upmc.fr */
+/* Copyright Sorbonne-Universités 2015-2018 */
+/* PLEASE DO NOT REMOVE THIS BANNER */
+
 
 include "getARGV.idp"
 include "macros.edp"
@@ -24,7 +29,7 @@ cout.precision(12);
 //////////////////////////////////////////////////////////////////////////
 
 /* Numerical parameters */
-real mu = 1./200;    //viscosity
+real nu = 1./200;    //viscosity
 real muer = 1;
 
 //////////////////////////////////////////////////////////////////////////
@@ -186,7 +191,7 @@ if(config == 7) {
 /////////////  Variational Problem for the Stokes equation  //////////////
 //////////////////////////////////////////////////////////////////////////
 problem stokes([ux, uy, p], [vx, vy, q]) =
-  int2d(Th)(2*mu*tr(EPS(ux,uy))*EPS(vx,vy) - p * div(vx,vy))
+  int2d(Th)(2*nu*tr(EPS(ux,uy))*EPS(vx,vy) - p * div(vx,vy))
   +int2d(Th)(div(ux,uy)*q)
   -int2d(Th)(p*q*epsilon)
   /* +int2d(Th)(pn*(ux*vx+uy*vy)) /\* MATMOU *\/ */
@@ -212,12 +217,12 @@ macro ns () {
       /* Newton Loop  */
       for(n=0; n< 15; n++) {
 	solve Oseen([dux,duy,dp],[vx,vy,qq]) =
-	  int2d(Th)(2*mu*tr(EPS(dux,duy))*EPS(vx,vy)
+	  int2d(Th)(2*nu*tr(EPS(dux,duy))*EPS(vx,vy)
 		    + tr(UgradV(dux,duy, ux, uy))*[vx,vy]
 		    + tr(UgradV(ux,uy,dux,duy))*[vx,vy]
 		    - div(dux,duy)*qq - div(vx,vy)*dp
 		    - epsilon*dp*qq)
-	  +int2d(Th)(2*mu*tr(EPS(ux,uy))*EPS(vx,vy)
+	  +int2d(Th)(2*nu*tr(EPS(ux,uy))*EPS(vx,vy)
 		     + tr(UgradV(ux,uy, ux, uy))*[vx,vy]
 		     - div(ux,uy)*qq - div(vx,vy)*p
 		     - epsilon*p*qq)
@@ -247,8 +252,8 @@ macro ns () {
 //////////////////////////////////////////////////////////////////////////
 macro adjoint() {
     solve probadjoint([vx, vy, q], [wx, wy, qq]) =
-      int2d(Th) (2*mu*tr(EPS(vx, vy))*EPS(wx, wy) - q*div(wx, wy) -qq * div(vx, vy) + navsto*(tr(UgradV(wx, wy, ux, uy))*[vx, vy] + tr(UgradV(ux,uy,wx,wy))*[vx,vy]))
-      +int2d(Th)(- 4*mu*delta*tr(EPS(ux,uy))*EPS(wx,wy))
+      int2d(Th) (2*nu*tr(EPS(vx, vy))*EPS(wx, wy) - q*div(wx, wy) -qq * div(vx, vy) + navsto*(tr(UgradV(wx, wy, ux, uy))*[vx, vy] + tr(UgradV(ux,uy,wx,wy))*[vx,vy]))
+      +int2d(Th)(- 4*nu*delta*tr(EPS(ux,uy))*EPS(wx,wy))
       +int1d(Th,2)(-(1-delta)*((ux-uxx)*wx+(uy-uyy)*wy))
       +on(1,3,5, vx=0, vy=0);
 }//EOM
@@ -329,6 +334,7 @@ for (jj = 0; (sv > errc) && (jj < jjmax); jj++) {
       
       /* Try to adapt the mesh in case one of the triangles becomes degenerate */
       if(optraff) {
+	/* No adaptation if the minimal area is larger than parameter minarea0 or if we already tried remeshing 3 times in this loop */
 	    if (minarea > minarea0 || adaptcount>=3) {
 	      Th = movemesh(Th2, [x + tau1*dpx, y + tau1*dpy]);
 	      solvefluid = 1;
