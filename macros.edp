@@ -80,6 +80,8 @@ macro EL() (J/J0 + l*(contr(Th) - ctarget)/c0 + b/2 * ((contr(Th) - ctarget)^2)/
 
 /* Shape gradient of the constraint function */
 macro gradC() (beta*1+(1.-beta)*kappa) //EOM
+
+/* Shape-gradient of the Lagrangian */
 macro gradDF() (IJ/J0 + l*gradC/c0 + b*gradC*(contr(Th)-ctarget)/(c0^2)) //EOM
 
 /* (Vector) gradient of a scale function u */

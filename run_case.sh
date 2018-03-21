@@ -24,7 +24,7 @@ case "$1" in
 	;;
     4)
 	echo "Launching test-case 4"
-	$FF main.edp --config 4 --resu resu/case4 --binit 1e1 --btarget 1e2 --cv 1 --tau 3e-3 --l0 15 --optraff 1 --raffinit 3e-2 --kc -1 --errc 2e-2 $FLAGS
+	$FF main.edp --config 4 --resu resu/case4 --binit 1e1 --btarget 1e2 --cv 1 --tau 3e-3 --l0 15 --optraff 1 --raffinit 3e-2 --kc -1 --errc 5e-2 $FLAGS
 	;;
     5)
 	echo "Launching test-case 5"

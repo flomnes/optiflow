@@ -46,17 +46,16 @@ real cv = getARGV("--cv", 1.0);  /* Target volume (resp. perimeter) = cv * initi
 
 real alpha = getARGV("--alpha", 1.05); // Multiplication factor for the increase in the penalty in the augmented Lagrangian
 
-/* Balance parameter between the energy dissipation and the least-square error in the objective function 
+/* Balance parameter between the energy dissipation and the least-square error in the objective function
   delta = 1 => energy dissipation ; delta = 0 => least-square error */
 real delta = getARGV("--delta", 1.);
 
 real kc = getARGV("--kc", 1.); /* Set to -1 to compute the curvature on an obstacle in \Omega, +1 otherwise (default value) */
 
-int iimax = getARGV("--iimax", 5);  /* Maximum number of iterations for the inner line search loop */
 int jjmax = getARGV("--jjmax", 1000); /* Maximum number of iterations for the outer main optimization loop */
 int kkmax = getARGV("--kkmax", 3);
 
-/* Weight for the volume and the perimeter in the constraint function; 
+/* Weight for the volume and the perimeter in the constraint function;
  beta = 1 => volume; beta = 0 => perimeter */
 real beta = getARGV("--beta", 1.);
 
@@ -118,11 +117,9 @@ real sv; // Stores the actual L^2 norm of the shape gradient
 //////////////////////////////////////////////////////////////////////////
 fespace Qh(Th, P1);
 fespace Vh(Th,P2);
-fespace P0h(Th,P0);
 
 Vh    ux, uy, vx, vy, wx, wy, dux, duy, uxx, uyy, clx, cly;
 Qh    p,q, mx, dpx, dpy, dp, qq, phix, phiy, kappa, phi, psi;
-P0h   pn;
 
 //////////////////////////////////////////////////////////////////////////
 /////  Definition of the entrance flow, depending on the test case  //////
@@ -138,7 +135,7 @@ if(config == 2) {
     +poiseuillex(ll-1./9, 1./3-1./9, ll, 1./3, x, y)
     +poiseuillex(ll-1./3, 0, ll-2./9, 1./3-2./9, x, y);
 
-  
+
   cly = poiseuilley(ll-2./9, 2./3+2./9, ll-1./3, 1, x, y)
     +poiseuilley(ll, 2./3, ll-1./9,2./3+1./9, x, y)
     +poiseuilley(ll-1./9,1./3-1./9,ll, 1./3, x, y)
@@ -194,7 +191,6 @@ problem stokes([ux, uy, p], [vx, vy, q]) =
   int2d(Th)(2*nu*tr(EPS(ux,uy))*EPS(vx,vy) - p * div(vx,vy))
   +int2d(Th)(div(ux,uy)*q)
   -int2d(Th)(p*q*epsilon)
-  /* +int2d(Th)(pn*(ux*vx+uy*vy)) /\* MATMOU *\/ */
   +on(3,ux=0,uy=0)
   +on(1,ux=clx, uy=cly);
 
@@ -204,12 +200,12 @@ problem stokes([ux, uy, p], [vx, vy, q]) =
 //////////////////////////////////////////////////////////////////////////
 macro ns () {
   if (solvefluid) { /* Only solve when necessary
-		       if ns has never been executed or 
+		       if ns has never been executed or
 		       if the mesh has changed since the last resolution */
-    
+
     /* Initialize Newton loop with the solution of Stokes */
     stokes;
-    
+
     if(navsto) {
       int n;
       real err=0;
@@ -272,7 +268,7 @@ macro regulbord() {
     +on(1, 2, dpy=0);
 
 } //EOM
-	   
+
 string strname = getARGV("--resu", "");
 cout << "Results and figures will be saved in " << strname << endl;
 //strname = "resu/"+strname;
@@ -316,22 +312,19 @@ r << J << " " <<  EL << " " << contr(Th) << " " << l << " " << sv << " " << b <<
 
 /* Start of the main loop; ending criterion: sv = L^2 norm of the shape gradient is < errc */
 for (jj = 0; (sv > errc) && (jj < jjmax); jj++) {
-  
-  /* Line search inner loop */
-  for (ii = 0; ii < iimax; ii++) {
     Th2 = Th; // Update the geometry
     ns;      // Solve the NS equation if needed
     adjoint;  // Solve the adjoint system
-    /* Solve the velocity extension/regularization problem to get the descent direction; 
+    /* Solve the velocity extension/regularization problem to get the descent direction;
        the descent direction is [dpx,dpy] */
     regulbord;
     L0 = EL;  // Value of the augmented Lagrangian
     tau1 = tau;
-    
+
     for (kk = 0;kk < kkmax; kk++) {
       cout << "movemesh tau = "<< tau1 << endl;
       minarea = checkmovemesh(Th2, [x + tau1*dpx, y + tau1*dpy]);
-      
+
       /* Try to adapt the mesh in case one of the triangles becomes degenerate */
       if(optraff) {
 	/* No adaptation if the minimal area is larger than parameter minarea0 or if we already tried remeshing 3 times in this loop */
@@ -357,40 +350,39 @@ for (jj = 0; (sv > errc) && (jj < jjmax); jj++) {
 	    Th = movemesh(Th2, [x + tau1*dpx, y + tau1*dpy]);
 	    solvefluid = 1;
       }
-      
+
       /* Calculate the mean curvature of the new shape */
       courbure(Th, ordre, kappa[]);
       kappa = kc * kappa;
-      
+
       /* Solve the Navier-Stokes and adjoint equations on the new shape */
       ns;
       /* adjoint; */
-      
+
       /* New value of the objective function */
       L1 = EL;
       tau1/= 2;
       cout << "L = " << L1 << " / L0 = " << L0 << " (variation = " << 100*(L1-L0)/L0 << "%)" << endl;
-     
+
       /* Accept iteration as soon as the value of the augmented Lagrangian is decreased */
       if (L1 < L0) {
 	    break;
       }
     }
-    
+
     cout << "kk = " << kk << endl;
-    
+
     /* Maximum number of iterations has been reached, and no decrease in the value of the augmented Lagrangian is observed */
     if (kk == kkmax) {
       cout << "Warning : L_{n+1}>L_{n} (L0 = " << L0 << ", l = " << l << ")" << endl;
-      ii = iimax; /* Update the Lagrange multiplier, since we can't further decrease L */
     }
-    
+
     /* L^2 norm of the shape gradient */
     sv = sqrt(int1d(Th, 3)(dpx^2+dpy^2));
-    
+
     /* Print output */
       r << J << " " <<  EL << " " << contr(Th) << " " << l << " " << sv << " " << b << " " << minarea << endl;
-  }
+
 
   /* Update of the values of the coefficients of the augmented Lagrangian */
   l = l + b * (contr(Th) - ctarget);
@@ -407,16 +399,16 @@ for (jj = 0; (sv > errc) && (jj < jjmax); jj++) {
 
     mx=sqrt(dx(dpx)^2+dy(dpy)^2);
     plot(mx, fill=1, value=1,cmm="\|V\|", ps=strname+"/gradnorm"+ct+".ps");
-  
+
     plot(Th, ps=strname+"/mesh"+ct+".ps", wait=0, value=1, cmm="Iteration "+jj+"/"+jjmax+" (config "+config+")");
     savemesh(Th, strname+"/mesh"+ct+".msh");
-    
+
     ct++;
     r.flush;
     J1 = J;
-    cout << "jj = " << jj << endl;
   }
-}
+    cout << "jj = " << jj << endl;
+ }
 
 cout << "NS solved " << nflsolved << " times."<< endl;
 
@@ -426,4 +418,3 @@ if(save) {
   savemesh(Th, strname+"/mesh_final.msh");
   r.flush;
 }
-
