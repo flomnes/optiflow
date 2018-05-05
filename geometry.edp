@@ -117,10 +117,10 @@ Free boundary 3
 
 if (config == 6) { // Pipe with sliding outlet
   real h1 = .3;
-  real h2 = .4;
-  border b1(t=0,1){x=param(0,ll,t);y=param(0,h2,t);label=3;};
+  real h2 = 1;
+  border b1(t=0,1){x=param(0,ll,t);y=.05*sin(2*pi*t)+param(0,h2,t);label=3;};
   border b2(t=0,1){x=ll;y=param(h2,h1+h2,t);label=4;};
-  border b3(t=0,1){x=param(ll,0,t);y=param(h1+h2,h1,t);label=3;};
+  border b3(t=0,1){x=param(ll,0,t);y=.05*sin(2*pi*t)+param(h1+h2,h1,t);label=3;};
   border b4(t=0,1){x=0;y=param(h1,0,t);label=1;};
   
   Th = buildmesh(b1(pp/2)+b2(pp)+b3(pp)+b4(pp/2));
@@ -152,6 +152,6 @@ if (config == 7) {
 
 
 savemesh(Th,"meshes/mesh"+config+".mesh");
-//savemesh(Th,"meshes/mesh"+config+".msh");
+plot(Th, wait=1);
 
 

@@ -272,7 +272,7 @@ macro regulbord() {
 string strname = getARGV("--resu", "");
 cout << "Results and figures will be saved in " << strname << endl;
 //strname = "resu/"+strname;
-system("mkdir "+strname);
+system("mkdir -p "+strname);
 savemesh(Th, strname+"/initmesh.msh");
 /* Save the command */
 ofstream cmd(strname+"/commande.sh");
@@ -336,7 +336,7 @@ for (jj = 0; (sv > errc) && (jj < jjmax); jj++) {
 	      cout << "*** ADAPTMESH *** minarea = " << minarea << " minarea0 = " << minarea0 << endl;
 	      Th = adaptmesh(Th, hmax=raff, hmin=raff/sqrt(2), ratio=1.5);
 	      cout << " new minarea = " << minarea << endl;
-	      minarea = checkmovemesh(Th2, [x + tau1*dpx, y + tau1*dpy]);
+	      minarea = checkmovemesh(Th, [x, y]);
 	      solvefluid = 1;
 	      kappa = 0; /* DO NOT REMOVE */
 	      calculconnect(Th, ordre);
