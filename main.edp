@@ -144,10 +144,11 @@ if(config == 2) {
 
 if (config == 3) {
   clx = y*(1-y);
-  uxx = y^2*(1-y);
-  uyy = 0;
-  multint = int1d(Th,1)(clx)/int1d(Th,2)(uxx);
-  uxx = uxx * multint; // Re-normalisation par le flux d'entrée
+  cly = 0;
+  /* uxx = y*(1-y); */
+  /* uyy = 0; */
+  /* multint = int1d(Th,1)(clx)/int1d(Th,2)(uxx); */
+  /* uxx = uxx * multint; // Re-normalisation par le flux d'entrée */
 }
 
 if(config == 4) {
@@ -243,6 +244,7 @@ macro ns () {
   }
 }//EOF
 
+
 //////////////////////////////////////////////////////////////////////////
 ///////////////  Macro for the adjoint Navier-Stokes equation  ///////////
 //////////////////////////////////////////////////////////////////////////
@@ -286,6 +288,27 @@ ofstream volc(strname+"/voltarget");
 volc << ctarget << endl;
 volc.flush;
 
+// In this block, we compute a reference profile from a real domain. The goal of test-case 3 is to recover \Omega from this profile.
+if(config == 3) {
+  Th = movemesh(Th, [x, y+.2*x*(ll-x)]);
+  plot(Th, ps=strname+"/refmesh.ps");
+  savemesh(Th, strname+"/mesh_ref.msh");
+  ns;
+  uxx = ux;
+  uyy = uy;
+  multint = int1d(Th,1)(clx)/int1d(Th,2)(uxx);
+  uxx = uxx * multint; // Re-normalisation par le flux d'entrée
+
+  Th = readmesh(meshname);
+  solvefluid = 1; // The mesh has changed, so we need to recompute the solution of NS
+  ux = 0;
+  uy = 0;
+  uxx = uxx;
+  uyy = uyy;
+  plot([uxx, uyy], cmm="uxx, uyy",wait=1);
+ }
+
+
 /* Calculation of the mean curvature */
 calculconnect(Th, ordre);
 courbure(Th, ordre, kappa[]);
@@ -293,9 +316,16 @@ kappa = kc * kappa; // Adjust sign
 
 /* Solve Navier-Stokes equations on the initial shape */
 ns;
-
 /* Initial value of the objective function */
 J0 = J;
+
+if(config == 3) {
+ofstream proi(strname+"/initial_profil.dat");
+  for(real yy=0;yy<1;yy+=.01){
+    proi << ux(ll, yy) << " " << uy(ll,yy) << endl;
+  }
+  proi.flush;
+ }
 
 /* Save initial value of J */
 {
@@ -417,4 +447,16 @@ if(save) {
   plot(Th, [ux,uy], ps=strname+"/velocity.ps", cmm="Velocity", wait=0);
   savemesh(Th, strname+"/mesh_final.msh");
   r.flush;
+
+  ofstream prof(strname+"/final_profil.dat");
+  for(real yy=0;yy<1;yy+=.01){
+    prof << ux(ll, yy) << " " << uy(ll,yy) << endl;
+  }
+  prof.flush;
+
+  ofstream pror(strname+"/ref_profil.dat");
+  for(real yy=0;yy<1;yy+=.01){
+    pror << uxx(ll, yy) << " " << uyy(ll,yy) << endl;
+  }
+  pror.flush;
 }
