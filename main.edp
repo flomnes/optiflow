@@ -290,17 +290,15 @@ volc.flush;
 
 // In this block, we compute a reference profile from a real domain. The goal of test-case 3 is to recover \Omega from this profile.
 if(config == 3) {
-  Th = movemesh(Th, [x, y+.2*x*(ll-x)]);
+  Th = movemesh(Th, [x, y+0.2*x*(ll-x)]);
   plot(Th, ps=strname+"/refmesh.ps");
   savemesh(Th, strname+"/mesh_ref.msh");
   ns;
   uxx = ux;
-  uyy = uy;
-  multint = int1d(Th,1)(clx)/int1d(Th,2)(uxx);
-  uxx = uxx * multint; // Re-normalisation par le flux d'entrée
+  uyy = uy; // uxx and uyy will only be used on border number 2 (outlet)
 
   Th = readmesh(meshname);
-  solvefluid = 1; // The mesh has changed, so we need to recompute the solution of NS
+  solvefluid = 1; // The mesh has changed, we need to recompute the solution of NS
   ux = 0;
   uy = 0;
   uxx = uxx;
@@ -322,10 +320,12 @@ J0 = J;
 if(config == 3) {
 ofstream proi(strname+"/initial_profil.dat");
   for(real yy=0;yy<1;yy+=.01){
-    proi << ux(ll, yy) << " " << uy(ll,yy) << endl;
+    proi << yy << " " << ux(ll, yy) << " " << uy(ll,yy) << endl;
   }
   proi.flush;
  }
+
+plot(Th, ps=strname+"/initial_mesh.ps");
 
 /* Save initial value of J */
 {
@@ -433,6 +433,13 @@ for (jj = 0; (sv > errc) && (jj < jjmax); jj++) {
     plot(Th, ps=strname+"/mesh"+ct+".ps", wait=0, value=1, cmm="Iteration "+jj+"/"+jjmax+" (config "+config+")");
     savemesh(Th, strname+"/mesh"+ct+".msh");
 
+  ofstream prof(strname+"/profil"+ct+".dat");
+  for(real yy=0;yy<1;yy+=.01){
+    prof << yy << " " << ux(ll, yy) << " " << uy(ll,yy) << endl;
+  }
+  prof.flush;
+
+    
     ct++;
     r.flush;
     J1 = J;
@@ -450,13 +457,13 @@ if(save) {
 
   ofstream prof(strname+"/final_profil.dat");
   for(real yy=0;yy<1;yy+=.01){
-    prof << ux(ll, yy) << " " << uy(ll,yy) << endl;
+    prof << yy << " " << ux(ll, yy) << " " << uy(ll,yy) << endl;
   }
   prof.flush;
 
   ofstream pror(strname+"/ref_profil.dat");
   for(real yy=0;yy<1;yy+=.01){
-    pror << uxx(ll, yy) << " " << uyy(ll,yy) << endl;
+    pror << yy << " "  << uxx(ll, yy) << " " << uyy(ll,yy) << endl;
   }
   pror.flush;
 }

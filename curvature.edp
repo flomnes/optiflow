@@ -264,7 +264,7 @@ func int courbure(mesh& Th, int[int,int]& ordre, real[int]& k) {
   }
 }
 
-func int writeboundary(mesh& Th, int[int,int]& ordre, string filename, real[int]& fn) {
+func int writeboundary(mesh& Th, int[int,int]& ordre, string filename) {
   int ii, jj, v;
   ofstream ncc(filename+".ncc");
   ncc  << ordre.n << endl;
@@ -273,13 +273,13 @@ func int writeboundary(mesh& Th, int[int,int]& ordre, string filename, real[int]
     for (jj = 0; jj < ordre.m; jj++) {
       v = ordre(ii,jj);
       if(v != -1) {
-	r << Th(v).x << " " << Th(v).y << " " << fn[v] << endl;
+	r << Th(v).x << " " << Th(v).y  << endl;
       } else {
 	break;
       }
     }
     v = ordre(ii,0);
-    r << Th(v).x << " " << Th(v).y << " " << fn[v] << endl;
+    r << Th(v).x << " " << Th(v).y << endl;
   }
 }
 

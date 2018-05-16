@@ -1,0 +1,14 @@
+include "curvature.edp"
+
+mesh Th = readmesh("mesh_ref.msh");
+mesh Th1 = readmesh("mesh_final.msh");
+
+int[int,int] ordre(1,1);
+calculconnect(Th, ordre);
+writeboundary(Th, ordre, "ref.dat");
+
+calculconnect(Th1, ordre);
+writeboundary(Th1, ordre, "final.dat");
+
+
+plot(Th, Th1,ps="superposition.ps");

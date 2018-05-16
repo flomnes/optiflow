@@ -1,0 +1,10 @@
+set terminal pdfcairo size 20cm, 15cm font ',28'
+  set output "profilx.pdf"
+  set grid
+  set key bottom center
+  plot "initial_profil.dat" u 1:2 w l lw 4 t "Initial profile", "profil5.dat" u 1:2 w l lw 4 t "Iteration 6","profil99.dat" u 1:2 w l lw 4 t "Iteration 100", "ref_profil.dat" u 1:2 w p pt 4 ps .8 t "Reference profile"
+
+  set key top left
+  set output "profily.pdf"
+  plot "initial_profil.dat" u 1:3 w l lw 4 t "Initial profile", "profil5.dat" u 1:3 w l lw 4 t "Iteration 6","profil99.dat" u 1:3 w l lw 4 t "Iteration 100", "ref_profil.dat" u 1:3 w p pt 4 ps .8 t "Reference profile"
+
