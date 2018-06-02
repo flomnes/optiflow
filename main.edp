@@ -374,6 +374,7 @@ for (jj = 0; (sv > errc) && (jj < jjmax); jj++) {
 	    }
 	    if(adaptcount>=3) {
 	      cout << "Too many consecutive mesh adaptations. Giving up mesh adaptation" << endl;
+	      adaptcount = 0;
 	    }
       }
       else {
